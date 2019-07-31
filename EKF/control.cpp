@@ -601,10 +601,14 @@ void Ekf::controlGpsFusion()
 		}
 
 		// Handle the case where we are using GPS and another source of aiding and GPS is failing checks
-		if (_control_status.flags.gps  && gps_checks_failing && (_control_status.flags.opt_flow || _control_status.flags.ev_pos)) {
-			_control_status.flags.gps = false;
-			ECL_WARN("EKF GPS data quality poor - stopping use");
-		}
+                if (_control_status.flags.gps  && gps_checks_failing && (_control_status.flags.opt_flow || _control_status.flags.ev_pos)) {
+                    _control_status.flags.gps = false;
+                    // Reset position state to external vision if we are going to use absolute values
+                    if (_control_status.flags.ev_pos && !(_params.fusion_mode & MASK_ROTATE_EV)) {
+                        resetPosition();
+                    }
+                    ECL_WARN("EKF GPS data quality poor - stopping use");
+                }
 
 		// handle the case when we now have GPS, but have not been using it for an extended period
 		if (_control_status.flags.gps) {
